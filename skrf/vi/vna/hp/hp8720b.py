@@ -325,8 +325,7 @@ class HP8720B(VNA):
 
     def one_port(self, **kwargs):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
-        if self.compound_sweep_plan is None:
-            return self._one_port()
+        return self._one_port()
 
     def _two_port(self, expected_hz=None, fresh_sweep=True):
         ''' Performs a single sweep and returns Network data. '''
