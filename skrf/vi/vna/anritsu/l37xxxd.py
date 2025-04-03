@@ -1,9 +1,6 @@
 from enum import Enum
 
-from skrf.vi.validators import (
-    BooleanValidator,
-    EnumValidator,
-)
+from skrf.vi.validators import BooleanValidator, EnumValidator, FreqValidator
 from skrf.vi.vna import VNA
 
 
@@ -51,25 +48,29 @@ class L37xxXD(VNA):
     freq_start = VNA.command(
         get_cmd='STR?',
         set_cmd='STR <arg>',
-        doc="""The start frequency [Hz]"""
+        doc="""The start frequency [Hz]""",
+        validator=FreqValidator()
     )
 
     freq_stop = VNA.command(
         get_cmd='STP?',
         set_cmd='STP <arg>',
-        doc="""The stop frequency [Hz]"""
+        doc="""The stop frequency [Hz]""",
+        validator=FreqValidator()
     )
 
     freq_span = VNA.command(
         get_cmd='SPAN?',
         set_cmd='SPAN <arg>',
-        doc="""The frequency span [Hz]"""
+        doc="""The frequency span [Hz]""",
+        validator=FreqValidator()
     )
 
     freq_center = VNA.command(
         get_cmd='CNTR?',
         set_cmd='CNTR <arg>',
-        doc="""The center frequency [Hz]"""
+        doc="""The center frequency [Hz]""",
+        validator=FreqValidator()
     )
 
     npoints = VNA.command(
