@@ -68,6 +68,8 @@ class HP8720B(VNA):
     min_hz = 130E6  #: Minimum frequency supported by instrument
     max_hz = 20E9  #: Maximum frequency supported by instrument
 
+    _scpi = False  #: SCPI version of the instrument (8720B is not SCPI compliant)
+
     def __init__(self, address : str, backend : str = "@py", **kwargs):
         super().__init__(address, backend, **kwargs)
         # Tested 2024-05-29:
