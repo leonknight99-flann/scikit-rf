@@ -1,7 +1,10 @@
 from enum import Enum
 
-from skrf.vi.validators import BooleanValidator, EnumValidator, FreqValidator
-from skrf.vi.vna import VNA
+import numpy as np
+
+import skrf
+from skrf.vi.validators import BooleanValidator, EnumValidator, FreqValidator, IntValidator, SetValidator
+from skrf.vi.vna import VNA, ValuesFormat
 
 
 class nFrequencyPoints(Enum):
@@ -30,20 +33,19 @@ class SweepMode(Enum):
 class IFbwMode(Enum):
     IF10HZ = "1"
     IF100HZ = "2"
-    IF1KHZ = "N"
+    IF1KHZ = "3"
     IF10KHZ = "4"
     IF30KHZ = "A"
 
 class L37xxXD(VNA):
     """
-    Class for Anritsu Lightning 37xxXD VNAs.
+    Anritsu Lightning 37xxXD VNAs.
+
+    Lightning Models
+    ================
+    37369D, ...
 
     """
-
-    def __init__(self, address : str, backend : str = "@py", **kwargs):
-        super().__init__(address, backend, **kwargs)
-
-        self._resource.read_termination = "\n"
 
     freq_start = VNA.command(
         get_cmd='STR?',
@@ -77,7 +79,7 @@ class L37xxXD(VNA):
         get_cmd='ONP',
         set_cmd='NP <arg>',
         doc="""The number of frequency points (51, 101, 201, 401, 801, 1601)""",
-        validator=EnumValidator(nFrequencyPoints)
+        validator=SetValidator([51, 101, 201, 401, 801, 1601]) #EnumValidator(nFrequencyPoints)
     )
 
     if_bandwidth = VNA.command(
@@ -104,7 +106,151 @@ class L37xxXD(VNA):
     averaging_count = VNA.command(
         get_cmd='AVG?',
         set_cmd='AVG <arg>',
+        doc="""The number of averages (1-4095)""",
+        validator=IntValidator(1, 4095, inclusive=True)
     )
 
-    def reset_averaging(self):
-        self.write('AON')
+    averaging_mode = VNA.command(
+        get_cmd='SWAVG?',  # Returns 0 for point, 1 for sweep
+        set_cmd='<arg>',
+        doc="""The averaging mode (over points, over sweeps)""",
+        validator=BooleanValidator('1', '0', 'SWAVG', 'PTAVG')
+    )
+
+    def __init__(self, address : str, backend : str = "@py", **kwargs):
+        super().__init__(address, backend, **kwargs)
+
+        self._resource.read_termination = "\n"
+        _ = self.query_format # calling the getter sets _values_format to make sure we're in sync with the instrument
+
+    def clear_averaging(self):
+        self.write('AON')  # Turn averaging on / refresh averaging
+
+    @property
+    def frequency(self) -> skrf.Frequency:
+        f = skrf.Frequency(
+            start=self.freq_start,
+            stop=self.freq_stop,
+            npoints=self.npoints,
+            unit="hz",
+        )
+        return f
+
+    @frequency.setter
+    def frequency(self, f: skrf.Frequency) -> None:
+        self.freq_start = f.start
+        self.freq_stop = f.stop
+        self.npoints = f.npoints
+
+    @property
+    def query_format(self) -> ValuesFormat:
+        """
+        How values are written to / queried from the instrument (ascii or
+        binary)
+
+        When transferring a large number of values from the instrument (like
+        trace data), it can be done either as ascii characters or as binary.
+
+        Transferring in binary is much faster, as large numbers can be
+        represented much more succinctly.
+        """
+        fmt = self.query("FORM?")
+        if fmt == "ASC,0":
+            self._values_fmt = ValuesFormat.ASCII
+        elif fmt == "REAL,32":
+            self._values_fmt = ValuesFormat.BINARY_32
+        elif fmt == "REAL,64":
+            self._values_fmt = ValuesFormat.BINARY_64
+        return self._values_fmt
+
+    @query_format.setter
+    def query_format(self, fmt: ValuesFormat) -> None:
+        if fmt == ValuesFormat.ASCII:
+            self._values_fmt = ValuesFormat.ASCII
+            self.write("FORM ASC,0")
+        elif fmt == ValuesFormat.BINARY_32:
+            self._values_fmt = ValuesFormat.BINARY_32
+            self.write("FORM REAL,32")
+        elif fmt == ValuesFormat.BINARY_64:
+            self._values_fmt = ValuesFormat.BINARY_64
+            self.write("FORM REAL,64")
+
+
+    def get_snp_network(self, ports=None, data_level='calibrated') -> skrf.Network:
+        """
+        Get trace data as an :class:`skrf.Network`
+
+        Parameters
+        ----------
+        ports: Sequence
+            Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
+        data_level: str
+            Where in the data processing should the s-parameters be taken from.
+            Options are 'raw', 'corrected', 'formated'. Corrected is the data
+            after calibration, and formatted is the data after all processing
+            (like smoothing, etc).
+            (Default to calibrated)
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            The measured data
+        """
+        if data_level not in ('raw', 'corrected', 'formatted'):
+            raise ValueError("data_level must be one of 'raw', 'corrected', or 'formatted'")
+
+        if ports is None:
+            ports = (1,2)
+
+        ntwk = skrf.Network()
+        ntwk.frequency = self.frequency
+        ntwk.s = np.empty(
+            shape=(ntwk.frequency.npoints, len(ports), len(ports)), dtype=complex
+        )
+
+        self.sweep()
+
+        if ports == (1,):
+            if data_level == 'raw':
+                s11 = self.query_values("OS11R;")
+            elif data_level == 'corrected':
+                s11 = self.query_values("OS11C;")
+            elif data_level == 'formatted':
+                raise ValueError("Formatted data not implemented yet")
+            print(s11)
+            ntwk.s[:, 0, 0] = s11
+
+        elif ports == (2,):
+            if data_level == 'raw':
+                s22 = self.query_values("OS22R;")
+            elif data_level == 'corrected':
+                s22 = self.query_values("OS22C;")
+            elif data_level == 'formatted':
+                raise ValueError("Formatted data not implemented yet")
+            print(s22)
+            ntwk.s[:, 1, 1] = s22
+
+        elif ports == (1,2) or ports == (2,1):
+            if data_level == 'raw':
+                s = self.query_values("O4SR;")
+            elif data_level == 'corrected':
+                s = self.query_values("OS2P;")
+            elif data_level == 'formatted':
+                raise ValueError("Formatted data not implemented yet")
+            print(s)
+            ntwk.s[:, 0, 0] = s[:, 0]
+            ntwk.s[:, 1, 1] = s[:, 1]
+            ntwk.s[:, 0, 1] = s[:, 2]
+            ntwk.s[:, 1, 0] = s[:, 3]
+
+        else:
+            raise ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2).")
+
+        return ntwk
+
+    def sweep(self, mode: SweepMode = SweepMode.NORMAL) -> None:
+        """Trigger a fresh sweep."""
+        self._resource.clear()
+        current_sweep_mode = self.sweep_mode
+        self.write('TRS')  # Trigger / restart sweep
+        self.sweep_mode = current_sweep_mode
