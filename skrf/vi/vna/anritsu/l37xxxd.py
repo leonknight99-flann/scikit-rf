@@ -123,6 +123,11 @@ class L37xxXD(VNA):
         self._resource.read_termination = "\n"
         _ = self.query_format # calling the getter sets _values_format to make sure we're in sync with the instrument
 
+    @property
+    def id(self):
+        ''' Instrument ID string '''
+        return self.query("*IDN?;")
+
     def clear_averaging(self):
         self.write('AON')  # Turn averaging on / refresh averaging
 
