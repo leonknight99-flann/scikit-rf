@@ -159,7 +159,7 @@ class CMT(VNA):
             Parameters
             ----------
             ports: Sequence
-                Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
+                Which ports to get s parameters for.
             data_level: str
                 Where in the data processing should the s-parameters be taken from.
                 Options are 'raw', 'cal', 'form'. 'cal' is the data

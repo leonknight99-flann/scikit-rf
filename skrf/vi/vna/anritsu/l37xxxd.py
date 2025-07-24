@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 import numpy as np
@@ -181,14 +183,14 @@ class L37xxXD(VNA):
             self.write("FMB")
 
 
-    def get_snp_network(self, ports=None, data_level: str = 'cal') -> skrf.Network:
+    def get_snp_network(self, ports: tuple | None = None, data_level: str = 'cal') -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
         Parameters
         ----------
-        ports: Sequence
-            Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
+        ports: Tuple
+            Which ports to get s parameters for. Can only be (1,), (2,), or (1, 2)
         data_level: str
             Where in the data processing should the s-parameters be taken from.
             Options are 'raw', 'cal', 'form'. 'cal' is the data
