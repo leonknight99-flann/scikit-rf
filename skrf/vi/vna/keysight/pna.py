@@ -12,7 +12,6 @@ from enum import Enum
 import numpy as np
 
 import skrf
-from skrf.vi import vna
 from skrf.vi.validators import (
     BooleanValidator,
     DelimitedStrValidator,
@@ -21,7 +20,7 @@ from skrf.vi.validators import (
     FreqValidator,
     IntValidator,
 )
-from skrf.vi.vna import VNA, ValuesFormat
+from skrf.vi.vna import VNA, Channel, ValuesFormat
 
 
 class SweepType(Enum):
@@ -84,7 +83,7 @@ class PNA(VNA):
         "N5227B": {"nports": 4, "unsupported": []},
     }
 
-    class Channel(vna.Channel):
+    class Channel(Channel):
         def __init__(self, parent, cnum: int, cname: str):
             super().__init__(parent, cnum, cname)
 
@@ -511,27 +510,27 @@ class PNA(VNA):
         self.write(f"CALC{ch.cnum}:PAR:MNUM {msmnt}")
 
     @property
-    def query_format(self) -> vna.ValuesFormat:
+    def query_format(self) -> ValuesFormat:
         fmt = self.query("FORM?").replace("+", "")
         if fmt == "ASC,0":
-            self._values_fmt = vna.ValuesFormat.ASCII
+            self._values_fmt = ValuesFormat.ASCII
         elif fmt == "REAL,32":
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+            self._values_fmt = ValuesFormat.BINARY_32
         elif fmt == "REAL,64":
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+            self._values_fmt = ValuesFormat.BINARY_64
         return self._values_fmt
 
     @query_format.setter
-    def query_format(self, fmt: vna.ValuesFormat) -> None:
-        if fmt == vna.ValuesFormat.ASCII:
-            self._values_fmt = vna.ValuesFormat.ASCII
+    def query_format(self, fmt: ValuesFormat) -> None:
+        if fmt == ValuesFormat.ASCII:
+            self._values_fmt = ValuesFormat.ASCII
             self.write("FORM ASC,0")
-        elif fmt == vna.ValuesFormat.BINARY_32:
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+        elif fmt == ValuesFormat.BINARY_32:
+            self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM:BORD SWAP")
             self.write("FORM REAL,32")
-        elif fmt == vna.ValuesFormat.BINARY_64:
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+        elif fmt == ValuesFormat.BINARY_64:
+            self._values_fmt = ValuesFormat.BINARY_64
             self.write("FORM:BORD SWAP")
             self.write("FORM REAL,64")
 

@@ -9,14 +9,13 @@ import sys
 from enum import Enum
 
 import skrf
-from skrf.vi import vna
 from skrf.vi.validators import (
     BooleanValidator,
     EnumValidator,
     FreqValidator,
     IntValidator,
 )
-from skrf.vi.vna import VNA
+from skrf.vi.vna import VNA, Channel, ValuesFormat
 
 
 class SweepType(Enum):
@@ -58,7 +57,7 @@ class CMT(VNA):
         "C4220": {"nports": 2, "unsupported": []},
     }
 
-    class Channel(vna.Channel):
+    class Channel(Channel):
         def __init__(self, parent, cnum: int, cname: str):
             super().__init__(parent, cnum, cname)
 
@@ -175,10 +174,15 @@ class CMT(VNA):
                 The measured data
             """
             if data_level not in ('raw', 'cal', 'form'):
-                raise ValueError("data_level must be one of 'raw', 'corrected', or 'formatted'")
+                raise ValueError("data_level must be one of 'raw', 'cal', or 'form'")
 
             if ports is None:
-                ports = (1,2)
+                ports = list(range(1, self.parent.nports + 1))
+
+            orig_query_fmt = self.parent.query_format
+            self.parent.query_format = ValuesFormat.BINARY_64
+            self.parent.active_channel = self
+            print(orig_query_fmt)
             return
 
         def sweep(self) -> None:
@@ -232,26 +236,26 @@ class CMT(VNA):
         self.write(f"DISP:WIND{ch.cnum}:ACT")
 
     @property
-    def query_format(self) -> vna.ValuesFormat:
+    def query_format(self) -> ValuesFormat:
         fmt = self.query("FORM:DATA?")
         if fmt == "ASC":
-            self._values_fmt = vna.ValuesFormat.ASCII
+            self._values_fmt = ValuesFormat.ASCII
         elif fmt == "REAL32":
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+            self._values_fmt = ValuesFormat.BINARY_32
         elif fmt == "REAL":
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+            self._values_fmt = ValuesFormat.BINARY_64
         return self._values_fmt
 
     @query_format.setter
-    def query_format(self, fmt: vna.ValuesFormat) -> None:
-        if fmt == vna.ValuesFormat.ASCII:
-            self._values_fmt = vna.ValuesFormat.ASCII
+    def query_format(self, fmt: ValuesFormat) -> None:
+        if fmt == ValuesFormat.ASCII:
+            self._values_fmt = ValuesFormat.ASCII
             self.write("FORM:DATA ASC")
-        elif fmt == vna.ValuesFormat.BINARY_32:
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+        elif fmt == ValuesFormat.BINARY_32:
+            self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM:BORD SWAP")
             self.write("FORM REA32")
-        elif fmt == vna.ValuesFormat.BINARY_64:
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+        elif fmt == ValuesFormat.BINARY_64:
+            self._values_fmt = ValuesFormat.BINARY_64
             self.write("FORM:BORD SWAP")
             self.write("FORM REAL")

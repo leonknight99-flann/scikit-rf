@@ -34,7 +34,6 @@ from enum import Enum
 import numpy as np
 
 import skrf
-from skrf.vi import vna
 from skrf.vi.validators import (
     BooleanValidator,
     EnumValidator,
@@ -43,6 +42,7 @@ from skrf.vi.validators import (
     IntValidator,
     SetValidator,
 )
+from skrf.vi.vna import VNA, ValuesFormat
 
 
 class WindowFormat(Enum):
@@ -63,7 +63,7 @@ class WindowFormat(Enum):
     TWO_BY_TWO = "D12_34"
 
 
-class FieldFox(vna.VNA):
+class FieldFox(VNA):
     '''
     Keysight FieldFox.
 
@@ -72,84 +72,84 @@ class FieldFox(vna.VNA):
     network analyzer mode.
     '''
 
-    freq_start = vna.VNA.command(
+    freq_start = VNA.command(
         get_cmd="SENS:FREQ:STAR?",
         set_cmd="SENS:FREQ:STAR <arg>",
         doc="""The start frequency [Hz]""",
         validator=FreqValidator(),
     )
 
-    freq_stop = vna.VNA.command(
+    freq_stop = VNA.command(
         get_cmd="SENS:FREQ:STOP?",
         set_cmd="SENS:FREQ:STOP <arg>",
         doc="""The start frequency [Hz]""",
         validator=FreqValidator(),
     )
 
-    freq_center = vna.VNA.command(
+    freq_center = VNA.command(
         get_cmd="SENS:FREQ:CENT?",
         set_cmd="SENS:FREQ:CENT <arg>",
         doc="""The center frequency [Hz]""",
         validator=FreqValidator(),
     )
 
-    freq_span = vna.VNA.command(
+    freq_span = VNA.command(
         get_cmd="SENS:FREQ:SPAN?",
         set_cmd="SENS:FREQ:SPAN <arg>",
         doc="""The frequency span [Hz]""",
         validator=FreqValidator(),
     )
 
-    npoints = vna.VNA.command(
+    npoints = VNA.command(
         get_cmd="SENS:SWE:POIN?",
         set_cmd="SENS:SWE:POIN <arg>",
         doc="""The number of frequency points""",
         validator=IntValidator(),
     )
 
-    sweep_time = vna.VNA.command(
+    sweep_time = VNA.command(
         get_cmd="SENS:SWE:TIME?",
         set_cmd="SENS:SWE:TIME <arg>",
         doc="""The sweep time [s]""",
         validator=FloatValidator(),
     )
 
-    if_bandwidth = vna.VNA.command(
+    if_bandwidth = VNA.command(
         get_cmd="SENS:BWID?",
         set_cmd="SENS:BWID <arg>",
         doc="""The center frequency [Hz]""",
         validator=SetValidator([10, 30, 100, 300, 1000, 10_000, 30_000, 100_000]),
     )
 
-    window_configuration = vna.VNA.command(
+    window_configuration = VNA.command(
         get_cmd="DISP:WIND:SPL?",
         set_cmd="DISP:WIND:SPL <arg>",
         doc="""How multiple trace windows appear on screen""",
         validator=EnumValidator(WindowFormat),
     )
 
-    ntraces = vna.VNA.command(
+    ntraces = VNA.command(
         get_cmd="CALC:PAR:COUN?",
         set_cmd="CALC:PAR:COUN <arg>",
         doc="""The number of active traces.""",
         validator=IntValidator(min=1, max=4),
     )
 
-    active_trace = vna.VNA.command(
+    active_trace = VNA.command(
         set_cmd="CALC:PAR<arg>:SEL",
         doc="""Set the active trace. There is no command to read the active
             trace.""",
         validator=IntValidator(min=1, max=4),
     )
 
-    active_trace_sdata = vna.VNA.command(
+    active_trace_sdata = VNA.command(
         get_cmd="CALC:DATA:SDATA?",
         doc="""Get the current trace data as a network""",
         values=True,
         complex_values=True
     )
 
-    is_continuous = vna.VNA.command(
+    is_continuous = VNA.command(
         get_cmd="INIT:CONT?",
         set_cmd="INIT:CONT <arg>",
         doc="""Get the current trace data as a network""",
@@ -225,7 +225,7 @@ class FieldFox(vna.VNA):
             self.write_values(f"SENS:CORR:COEF {term},", cal_dict[cal_key], complex_values=True)
 
     @property
-    def query_format(self) -> vna.ValuesFormat:
+    def query_format(self) -> ValuesFormat:
         """
         How values are written to / queried from the instrument (ascii or
         binary)
@@ -238,23 +238,23 @@ class FieldFox(vna.VNA):
         """
         fmt = self.query("FORM?")
         if fmt == "ASC,0":
-            self._values_fmt = vna.ValuesFormat.ASCII
+            self._values_fmt = ValuesFormat.ASCII
         elif fmt == "REAL,32":
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+            self._values_fmt = ValuesFormat.BINARY_32
         elif fmt == "REAL,64":
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+            self._values_fmt = ValuesFormat.BINARY_64
         return self._values_fmt
 
     @query_format.setter
-    def query_format(self, fmt: vna.ValuesFormat) -> None:
-        if fmt == vna.ValuesFormat.ASCII:
-            self._values_fmt = vna.ValuesFormat.ASCII
+    def query_format(self, fmt: ValuesFormat) -> None:
+        if fmt == ValuesFormat.ASCII:
+            self._values_fmt = ValuesFormat.ASCII
             self.write("FORM ASC,0")
-        elif fmt == vna.ValuesFormat.BINARY_32:
-            self._values_fmt = vna.ValuesFormat.BINARY_32
+        elif fmt == ValuesFormat.BINARY_32:
+            self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM REAL,32")
-        elif fmt == vna.ValuesFormat.BINARY_64:
-            self._values_fmt = vna.ValuesFormat.BINARY_64
+        elif fmt == ValuesFormat.BINARY_64:
+            self._values_fmt = ValuesFormat.BINARY_64
             self.write("FORM REAL,64")
 
     def get_measurement_parameter(self, trace: int) -> str:
