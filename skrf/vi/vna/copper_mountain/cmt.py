@@ -153,7 +153,7 @@ class CMT(VNA):
             self.freq_stop = f.stop
             self.npoints = f.npoints
 
-        def get_snp_network(self, ports: Sequence | None = None, data_level: str = 'calibrated') -> skrf.Network:
+        def get_snp_network(self, ports: Sequence | None = None, data_level: str = 'cal') -> skrf.Network:
             """
             Get trace data as an :class:`skrf.Network`
 
@@ -163,21 +163,25 @@ class CMT(VNA):
                 Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
             data_level: str
                 Where in the data processing should the s-parameters be taken from.
-                Options are 'raw', 'corrected', 'formated'. Corrected is the data
-                after calibration, and formatted is the data after all processing
-                (like smoothing, etc).
-                (Default to calibrated)
-
+                Options are 'raw', 'cal', 'form'. 'cal' is the data
+                after calibration and 'form' is the data after all processing
+                (like smoothing, etc). Must either select the specific VNA channel
+                for single formatted measurement or output all formated data channels
+                at once with '####' command.
+                (Default to corrected)
             Returns
             -------
             :class:`skrf.Network`
                 The measured data
             """
-            if data_level not in ('raw', 'corrected', 'formatted'):
+            if data_level not in ('raw', 'cal', 'form'):
                 raise ValueError("data_level must be one of 'raw', 'corrected', or 'formatted'")
 
             if ports is None:
                 ports = (1,2)
+            return
+
+        def sweep(self) -> None:
             return
 
 

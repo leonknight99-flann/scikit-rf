@@ -181,7 +181,7 @@ class L37xxXD(VNA):
             self.write("FMB")
 
 
-    def get_snp_network(self, ports=None, data_level: str = 'cor') -> skrf.Network:
+    def get_snp_network(self, ports=None, data_level: str = 'cal') -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
@@ -191,8 +191,8 @@ class L37xxXD(VNA):
             Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
         data_level: str
             Where in the data processing should the s-parameters be taken from.
-            Options are 'raw', 'cor', 'form'. Corrected is the data
-            after calibration, and formatted is the data after all processing
+            Options are 'raw', 'cal', 'form'. 'cal' is the data
+            after calibration and 'form' is the data after all processing
             (like smoothing, etc). Must either select the specific VNA channel
             for single formatted measurement or output all formated data channels
             at once with 'O4FD' command.
@@ -203,8 +203,8 @@ class L37xxXD(VNA):
         :class:`skrf.Network`
             The measured data
         """
-        if data_level not in ('raw', 'corrected', 'formatted'):
-            raise ValueError("data_level must be one of 'raw', 'corrected', or 'formatted'")
+        if data_level not in ('raw', 'cal', 'form'):
+            raise ValueError("data_level must be one of 'raw', 'cal', or 'form'")
 
         if ports is None:
             ports = (1,2)
@@ -220,7 +220,7 @@ class L37xxXD(VNA):
         if ports == (1,):
             if data_level == 'raw':
                 s11 = self.query_values("OS11R;")
-            elif data_level == 'cor':
+            elif data_level == 'cal':
                 s11 = self.query_values("OS11C;")
             elif data_level == 'form':
                 s11 = self.query_values("OFD;")
@@ -230,7 +230,7 @@ class L37xxXD(VNA):
         elif ports == (2,):
             if data_level == 'raw':
                 s22 = self.query_values("OS22R;")
-            elif data_level == 'cor':
+            elif data_level == 'cal':
                 s22 = self.query_values("OS22C;")
             elif data_level == 'form':
                 s22 = self.query_values("OFD;")
@@ -240,7 +240,7 @@ class L37xxXD(VNA):
         elif ports == (1,2) or ports == (2,1):
             if data_level == 'raw':
                 s = self.query_values("O4SR;")
-            elif data_level == 'cor':
+            elif data_level == 'cal':
                 s = self.query_values("OS2P;")
             elif data_level == 'form':
                 s = self.query_values("O4FD;")
