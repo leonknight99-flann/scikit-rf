@@ -15,7 +15,6 @@ HP8720B Class
 import numpy as np
 
 import skrf
-import skrf.network
 from skrf.vi.vna import VNA
 
 

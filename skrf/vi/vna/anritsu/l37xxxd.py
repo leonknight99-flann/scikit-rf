@@ -121,7 +121,7 @@ class L37xxXD(VNA):
         super().__init__(address, backend, **kwargs)
 
         self._resource.read_termination = "\n"
-        _ = self.query_format # calling the getter sets _values_format to make sure we're in sync with the instrument
+        self.model = self.id()
 
     @property
     def id(self):
@@ -159,12 +159,12 @@ class L37xxXD(VNA):
         Transferring in binary is much faster, as large numbers can be
         represented much more succinctly.
         """
-        fmt = self.query("FORM?")
-        if fmt == "ASC,0":
+        fmt = self.query("FMX?")
+        if fmt == "0":
             self._values_fmt = ValuesFormat.ASCII
-        elif fmt == "REAL,32":
+        elif fmt == "2":
             self._values_fmt = ValuesFormat.BINARY_32
-        elif fmt == "REAL,64":
+        elif fmt == "1":
             self._values_fmt = ValuesFormat.BINARY_64
         return self._values_fmt
 
@@ -172,16 +172,16 @@ class L37xxXD(VNA):
     def query_format(self, fmt: ValuesFormat) -> None:
         if fmt == ValuesFormat.ASCII:
             self._values_fmt = ValuesFormat.ASCII
-            self.write("FORM ASC,0")
+            self.write("FMA")
         elif fmt == ValuesFormat.BINARY_32:
             self._values_fmt = ValuesFormat.BINARY_32
-            self.write("FORM REAL,32")
+            self.write("FMC")
         elif fmt == ValuesFormat.BINARY_64:
             self._values_fmt = ValuesFormat.BINARY_64
-            self.write("FORM REAL,64")
+            self.write("FMB")
 
 
-    def get_snp_network(self, ports=None, data_level='calibrated') -> skrf.Network:
+    def get_snp_network(self, ports=None, data_level: str = 'calibrated') -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
