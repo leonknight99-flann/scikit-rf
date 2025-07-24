@@ -193,7 +193,9 @@ class L37xxXD(VNA):
             Where in the data processing should the s-parameters be taken from.
             Options are 'raw', 'cor', 'form'. Corrected is the data
             after calibration, and formatted is the data after all processing
-            (like smoothing, etc).
+            (like smoothing, etc). Must either select the specific VNA channel
+            for single formatted measurement or output all formated data channels
+            at once with 'O4FD' command.
             (Default to corrected)
 
         Returns
@@ -221,7 +223,7 @@ class L37xxXD(VNA):
             elif data_level == 'cor':
                 s11 = self.query_values("OS11C;")
             elif data_level == 'form':
-                raise ValueError("Formatted data not implemented yet")
+                s11 = self.query_values("OFD;")
             print(s11)
             ntwk.s[:, 0, 0] = s11
 
@@ -231,7 +233,7 @@ class L37xxXD(VNA):
             elif data_level == 'cor':
                 s22 = self.query_values("OS22C;")
             elif data_level == 'form':
-                raise ValueError("Formatted data not implemented yet")
+                s22 = self.query_values("OFD;")
             print(s22)
             ntwk.s[:, 1, 1] = s22
 
@@ -241,7 +243,7 @@ class L37xxXD(VNA):
             elif data_level == 'cor':
                 s = self.query_values("OS2P;")
             elif data_level == 'form':
-                raise ValueError("Formatted data not implemented yet")
+                s = self.query_values("O4FD;")
             print(s)
             ntwk.s[:, 0, 0] = s[:, 0]
             ntwk.s[:, 1, 1] = s[:, 1]
