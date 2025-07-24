@@ -181,7 +181,7 @@ class L37xxXD(VNA):
             self.write("FMB")
 
 
-    def get_snp_network(self, ports=None, data_level: str = 'calibrated') -> skrf.Network:
+    def get_snp_network(self, ports=None, data_level: str = 'cor') -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
@@ -191,10 +191,10 @@ class L37xxXD(VNA):
             Which ports to get s parameters for. Can only be 1, 2, or (1, 2)
         data_level: str
             Where in the data processing should the s-parameters be taken from.
-            Options are 'raw', 'corrected', 'formated'. Corrected is the data
+            Options are 'raw', 'cor', 'form'. Corrected is the data
             after calibration, and formatted is the data after all processing
             (like smoothing, etc).
-            (Default to calibrated)
+            (Default to corrected)
 
         Returns
         -------
@@ -218,9 +218,9 @@ class L37xxXD(VNA):
         if ports == (1,):
             if data_level == 'raw':
                 s11 = self.query_values("OS11R;")
-            elif data_level == 'corrected':
+            elif data_level == 'cor':
                 s11 = self.query_values("OS11C;")
-            elif data_level == 'formatted':
+            elif data_level == 'form':
                 raise ValueError("Formatted data not implemented yet")
             print(s11)
             ntwk.s[:, 0, 0] = s11
@@ -228,9 +228,9 @@ class L37xxXD(VNA):
         elif ports == (2,):
             if data_level == 'raw':
                 s22 = self.query_values("OS22R;")
-            elif data_level == 'corrected':
+            elif data_level == 'cor':
                 s22 = self.query_values("OS22C;")
-            elif data_level == 'formatted':
+            elif data_level == 'form':
                 raise ValueError("Formatted data not implemented yet")
             print(s22)
             ntwk.s[:, 1, 1] = s22
@@ -238,9 +238,9 @@ class L37xxXD(VNA):
         elif ports == (1,2) or ports == (2,1):
             if data_level == 'raw':
                 s = self.query_values("O4SR;")
-            elif data_level == 'corrected':
+            elif data_level == 'cor':
                 s = self.query_values("OS2P;")
-            elif data_level == 'formatted':
+            elif data_level == 'form':
                 raise ValueError("Formatted data not implemented yet")
             print(s)
             ntwk.s[:, 0, 0] = s[:, 0]
