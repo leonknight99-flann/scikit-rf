@@ -8,6 +8,8 @@ if TYPE_CHECKING:
 import sys
 from enum import Enum
 
+import numpy as np
+
 import skrf
 from skrf.vi.validators import (
     BooleanValidator,
@@ -152,29 +154,34 @@ class CMT(VNA):
             self.freq_stop = f.stop
             self.npoints = f.npoints
 
-        def get_snp_network(self, ports: Sequence | None = None, data_level: str = 'cal') -> skrf.Network:
+
+        def get_sdata(self):
             """
-            Get trace data as an :class:`skrf.Network`
+            Get selected trace data as an :class:`skrf.Network`
 
             Parameters
             ----------
-            ports: Sequence
-                Which ports to get s parameters for.
-            data_level: str
-                Where in the data processing should the s-parameters be taken from.
-                Options are 'raw', 'cal', 'form'. 'cal' is the data
-                after calibration and 'form' is the data after all processing
-                (like smoothing, etc). Must either select the specific VNA channel
-                for single formatted measurement or output all formated data channels
-                at once with '####' command.
-                (Default to corrected)
+
             Returns
             -------
             :class:`skrf.Network`
                 The measured data
             """
-            if data_level not in ('raw', 'cal', 'form'):
-                raise ValueError("data_level must be one of 'raw', 'cal', or 'form'")
+            return
+
+        def get_snp_network(self, ports: Sequence | None = None) -> skrf.Network:
+            """
+            Get snp network as an :class:`skrf.Network`
+
+            Parameters
+            ----------
+            ports: Sequence
+                Which ports to get s parameters for.
+            Returns
+            -------
+            :class:`skrf.Network`
+                The measured data
+            """
 
             if ports is None:
                 ports = list(range(1, self.parent.nports + 1))
@@ -182,6 +189,17 @@ class CMT(VNA):
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
             self.parent.active_channel = self
+
+            nports = len(ports)
+
+            ntwk = skrf.Network()
+            ntwk.frequency = self.frequency
+            ntwk.s = np.empty(
+                shape=(len(ntwk.frequency), nports, nports), dtype=complex
+            )
+
+            self.sweep()
+
             print(orig_query_fmt)
             return
 

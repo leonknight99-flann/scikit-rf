@@ -183,7 +183,19 @@ class L37xxXD(VNA):
             self.write("FMB")
 
 
-    def get_snp_network(self, ports: tuple | None = None, data_level: str = 'cal') -> skrf.Network:
+    def get_sdata(self):
+        """
+        Get the selected trace data as an :class:`skrf.Network`
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            The measured data
+        """
+        return self.get_snp_network((1,))
+
+
+    def get_snp_network(self, ports: tuple | None = None) -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
@@ -191,22 +203,12 @@ class L37xxXD(VNA):
         ----------
         ports: Tuple
             Which ports to get s parameters for. Can only be (1,), (2,), or (1, 2)
-        data_level: str
-            Where in the data processing should the s-parameters be taken from.
-            Options are 'raw', 'cal', 'form'. 'cal' is the data
-            after calibration and 'form' is the data after all processing
-            (like smoothing, etc). Must either select the specific VNA channel
-            for single formatted measurement or output all formated data channels
-            at once with 'O4FD' command.
-            (Default to corrected)
 
         Returns
         -------
         :class:`skrf.Network`
             The measured data
         """
-        if data_level not in ('raw', 'cal', 'form'):
-            raise ValueError("data_level must be one of 'raw', 'cal', or 'form'")
 
         if ports is None:
             ports = (1,2)
@@ -220,32 +222,17 @@ class L37xxXD(VNA):
         self.sweep()
 
         if ports == (1,):
-            if data_level == 'raw':
-                s11 = self.query_values("OS11R;")
-            elif data_level == 'cal':
-                s11 = self.query_values("OS11C;")
-            elif data_level == 'form':
-                s11 = self.query_values("OFD;")
+            s11 = self.query_values("OS11C;")
             print(s11)
             ntwk.s[:, 0, 0] = s11
 
         elif ports == (2,):
-            if data_level == 'raw':
-                s22 = self.query_values("OS22R;")
-            elif data_level == 'cal':
-                s22 = self.query_values("OS22C;")
-            elif data_level == 'form':
-                s22 = self.query_values("OFD;")
+            s22 = self.query_values("OS22C;")
             print(s22)
             ntwk.s[:, 1, 1] = s22
 
         elif ports == (1,2) or ports == (2,1):
-            if data_level == 'raw':
-                s = self.query_values("O4SR;")
-            elif data_level == 'cal':
-                s = self.query_values("OS2P;")
-            elif data_level == 'form':
-                s = self.query_values("O4FD;")
+            s = self.query_values("OS2P;")
             print(s)
             ntwk.s[:, 0, 0] = s[:, 0]
             ntwk.s[:, 1, 1] = s[:, 1]
