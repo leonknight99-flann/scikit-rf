@@ -186,11 +186,22 @@ class CMT(VNA):
             if ports is None:
                 ports = list(range(1, self.parent.nports + 1))
 
+            print(ports)
+
+            port_str = ",".join(str(port) for port in ports)
+
+            print(port_str)
+
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
+
+            print(self.parent.query_format)
+
             self.parent.active_channel = self
 
             nports = len(ports)
+
+            print(f"nports: {nports}")
 
             ntwk = skrf.Network()
             ntwk.frequency = self.frequency
@@ -198,13 +209,31 @@ class CMT(VNA):
                 shape=(len(ntwk.frequency), nports, nports), dtype=complex
             )
 
-            self.sweep()
+            print(ntwk)
 
+            self.write('TRIG:SOUR BUS')
+
+            self.sweep()
+            raw = self.query_values(f"CALC{self.cnum}:DATA:SDAT?", container=np.array, complex_values=True)
+            print(raw)
+            print(raw.shape)
+            self.parent.wait_for_complete()
             print(orig_query_fmt)
-            return
+
+
+
+            self.parent.query_format = orig_query_fmt
+
+            self.write("TRIG:SOUR INT")
+            return ntwk
 
         def sweep(self) -> None:
-            return
+            self.parent._resource.clear()
+            self.write("TRIG:SING")
+            print("Sweep started")
+            self.parent.wait_for_complete()
+            print("Sweep finished")
+
 
 
     def __init__(self, address: str, backend: str = "@py", **kwargs) -> None:
@@ -272,8 +301,8 @@ class CMT(VNA):
         elif fmt == ValuesFormat.BINARY_32:
             self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM:BORD SWAP")
-            self.write("FORM REA32")
+            self.write("FORM:DATA REA32")
         elif fmt == ValuesFormat.BINARY_64:
             self._values_fmt = ValuesFormat.BINARY_64
             self.write("FORM:BORD SWAP")
-            self.write("FORM REAL")
+            self.write("FORM:DATA REAL")
