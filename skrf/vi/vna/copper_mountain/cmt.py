@@ -6,9 +6,9 @@ if TYPE_CHECKING:
     from typing import Sequence
 
 import sys
+import tempfile
+import time
 from enum import Enum
-
-import numpy as np
 
 import skrf
 from skrf.vi.validators import (
@@ -186,55 +186,35 @@ class CMT(VNA):
             if ports is None:
                 ports = list(range(1, self.parent.nports + 1))
 
-            print(ports)
-
             port_str = ",".join(str(port) for port in ports)
-
-            print(port_str)
 
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
-
-            print(self.parent.query_format)
-
             self.parent.active_channel = self
 
             nports = len(ports)
 
-            print(f"nports: {nports}")
-
-            ntwk = skrf.Network()
-            ntwk.frequency = self.frequency
-            ntwk.s = np.empty(
-                shape=(len(ntwk.frequency), nports, nports), dtype=complex
-            )
-
-            print(ntwk)
-
-            self.write('TRIG:SOUR BUS')
+            # self.write('TRIG:SOUR BUS')
 
             self.sweep()
-            raw = self.query_values(f"CALC{self.cnum}:DATA:SDAT?", container=np.array, complex_values=True)
-            print(raw)
-            print(raw.shape)
+
+            self.write('MMEM:STOR:SNP:FORM RI')
+            self.write(f'MMEM:STOR:SNP:TYPE:S{nports}P {port_str}')
+            tempdir = tempfile.gettempdir()
+            self.write(f'MMEM:STOR:SNP "{tempdir}/measurement"')  # Save to temp dir on PC
             self.parent.wait_for_complete()
-            print(orig_query_fmt)
-
-
+            time.sleep(1)  # wait for the file to be saved and reopened
+            ntwk = skrf.Network(f'{tempdir}/measurement.s{nports}p')
 
             self.parent.query_format = orig_query_fmt
 
-            self.write("TRIG:SOUR INT")
+            # self.write("TRIG:SOUR INT")
             return ntwk
 
         def sweep(self) -> None:
             self.parent._resource.clear()
             self.write("TRIG:SING")
-            print("Sweep started")
             self.parent.wait_for_complete()
-            print("Sweep finished")
-
-
 
     def __init__(self, address: str, backend: str = "@py", **kwargs) -> None:
         super().__init__(address, backend, **kwargs)
