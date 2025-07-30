@@ -114,7 +114,7 @@ class L37xxXD(VNA):
         get_cmd='AVG?',
         set_cmd='AVG <arg>',
         doc="""The number of averages (1-4095)""",
-        validator=IntValidator(1, 4095, inclusive=True)
+        validator=IntValidator(1, 4095)
     )
 
     averaging_mode = VNA.command(
