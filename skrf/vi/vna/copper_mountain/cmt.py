@@ -197,14 +197,14 @@ class CMT(VNA):
             # self.write('TRIG:SOUR BUS')
 
             self.sweep()
-
+            # Could change to "Sens<self:cnum>:DATA:CORR? S11 S21 S12 S22" in the future to avoid the temp file
             self.write('MMEM:STOR:SNP:FORM RI')
             self.write(f'MMEM:STOR:SNP:TYPE:S{nports}P {port_str}')
             tempdir = tempfile.gettempdir()
-            self.write(f'MMEM:STOR:SNP "{tempdir}/measurement"')  # Save to temp dir on PC
+            self.write(f'MMEM:STOR:SNP "{tempdir}/skrf_cmt_measurement"')  # Save to temp dir on PC
             self.parent.wait_for_complete()
             time.sleep(1)  # wait for the file to be saved and reopened
-            ntwk = skrf.Network(f'{tempdir}/measurement.s{nports}p')
+            ntwk = skrf.Network(f'{tempdir}/skrf_cmt_measurement.s{nports}p')
 
             self.parent.query_format = orig_query_fmt
 
