@@ -44,7 +44,7 @@ class IFbwMode(Enum):
     IF10KHZ = "4"
     IF30KHZ = "A"
 
-class L37xxXD(VNA):
+class L37XXXD(VNA):
     """
     Anritsu Lightning 37xxXD VNAs.
 
