@@ -224,7 +224,7 @@ class CMT(VNA):
         self.create_channel(1, "Channel 1")
         self.active_channel = self.ch1
 
-        self.model = self.id.split(",")[1]
+        self.model = self.id.split(",")[1][1:]
         if self.model not in self._models:
             print(
                 f"WARNING: This model ({self.model}) has not been tested with "
