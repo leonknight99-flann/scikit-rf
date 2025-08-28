@@ -55,8 +55,8 @@ class L37XXXD(VNA):
     """
 
     freq_start = VNA.command(
-        get_cmd='STR?',
-        set_cmd='STR <arg>',
+        get_cmd='SRT?',
+        set_cmd='SRT <arg>',
         doc="""The start frequency [Hz]""",
         validator=FreqValidator()
     )
@@ -128,7 +128,7 @@ class L37XXXD(VNA):
         super().__init__(address, backend, **kwargs)
 
         self._resource.read_termination = "\n"
-        self.model = self.id()
+        self.model = self.id.split(",")[1]
 
     def clear_averaging(self):
         self.write('AON')  # Turn averaging on / refresh averaging
@@ -221,12 +221,12 @@ class L37XXXD(VNA):
 
         self.sweep()
 
-        if ports == 1:
+        if ports == (1,):
             s11 = self.query_values("OS11C;")
             print(s11)
             ntwk.s[:, 0, 0] = s11
 
-        elif ports == 2:
+        elif ports == (2,):
             s22 = self.query_values("OS22C;")
             print(s22)
             ntwk.s[:, 0, 0] = s22
