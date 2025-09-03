@@ -221,8 +221,10 @@ class L37XXXD(VNA):
 
         # self.sweep()
 
-        initial_format = self.query_format
+        orig_query_fmt = self.query_format
         self.query_format = ValuesFormat.ASCII
+        orig_timeout = self._resource.timeout
+        self._resource.timeout = 10000  # ms - increase timeout for large sweeps
 
         if ports == (1,):
             s11 = self.query_values("OS11C;", complex_values=True)
@@ -245,7 +247,8 @@ class L37XXXD(VNA):
         else:
             raise ValueError("Invalid ports "+str(ports)+". Options: 1, 2, (1,2).")
 
-        self.query_format = initial_format
+        self.query_format = orig_query_fmt
+        self._resource.timeout = orig_timeout
 
         return ntwk
 
