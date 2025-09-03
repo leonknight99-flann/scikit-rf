@@ -250,3 +250,9 @@ class L37XXXD(VNA):
         current_sweep_mode = self.sweep_mode
         self.write('TRS')  # Trigger / restart sweep
         self.sweep_mode = current_sweep_mode
+
+    def close(self) -> None:
+        """Close the connection to the instrument."""
+        self.write("*CLS")  # Clear status
+        self.write("RTL")
+        self._resource.close()
