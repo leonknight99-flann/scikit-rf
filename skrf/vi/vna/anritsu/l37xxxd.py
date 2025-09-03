@@ -219,20 +219,23 @@ class L37XXXD(VNA):
             shape=(ntwk.frequency.npoints, len(ports), len(ports)), dtype=complex
         )
 
-        self.sweep()
+        # self.sweep()
+
+        initial_format = self.query_format
+        self.query_format = ValuesFormat.ASCII
 
         if ports == (1,):
-            s11 = self.query_values("OS11C;")
+            s11 = self.query_values("OS11C;", complex_values=True)
             print(s11)
             ntwk.s[:, 0, 0] = s11
 
         elif ports == (2,):
-            s22 = self.query_values("OS22C;")
+            s22 = self.query_values("OS22C;", complex_values=True)
             print(s22)
             ntwk.s[:, 0, 0] = s22
 
         elif ports == (1,2) or ports == (2,1):
-            s = self.query_values("OS2P;")
+            s = self.query_values("OS2P;", complex_values=True)
             print(s)
             ntwk.s[:, 0, 0] = s[:, 0]
             ntwk.s[:, 1, 1] = s[:, 1]
@@ -241,6 +244,8 @@ class L37XXXD(VNA):
 
         else:
             raise ValueError("Invalid ports "+str(ports)+". Options: 1, 2, (1,2).")
+
+        self.query_format = initial_format
 
         return ntwk
 
