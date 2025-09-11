@@ -214,6 +214,9 @@ class L37XXXD(VNA):
             ports = (1,2)
 
         ntwk = skrf.Network()
+
+        print(self.frequency)
+
         ntwk.frequency = self.frequency
         ntwk.s = np.empty(
             shape=(ntwk.frequency.npoints, len(ports), len(ports)), dtype=complex
@@ -222,27 +225,27 @@ class L37XXXD(VNA):
         # self.sweep()
 
         orig_query_fmt = self.query_format
-        self.query_format = ValuesFormat.ASCII
+        self.query_format = ValuesFormat.BINARY_32
         orig_timeout = self._resource.timeout
         self._resource.timeout = 10000  # ms - increase timeout for large sweeps
 
         if ports == (1,):
-            s11 = self.query_values("OS11C;", complex_values=True)
-            print(s11)
+            s11 = self.query_values("OS11C;", is_big_endian=True, container=np.array)
+            s11 = s11[::2] + 1j*s11[1::2]
             ntwk.s[:, 0, 0] = s11
 
         elif ports == (2,):
-            s22 = self.query_values("OS22C;", complex_values=True)
-            print(s22)
+            s22 = self.query_values("OS22C;", is_big_endian=True, container=np.array)
+            s22 = s22[::2] + 1j*s22[1::2]
             ntwk.s[:, 0, 0] = s22
 
         elif ports == (1,2) or ports == (2,1):
-            s = self.query_values("OS2P;", complex_values=True)
-            print(s)
-            ntwk.s[:, 0, 0] = s[:, 0]
-            ntwk.s[:, 1, 1] = s[:, 1]
-            ntwk.s[:, 0, 1] = s[:, 2]
-            ntwk.s[:, 1, 0] = s[:, 3]
+            s = self.query_values("O4SC;", is_big_endian=True, container=np.array)
+            s = s[::2] + 1j*s[1::2]
+            ntwk.s[:, 0, 0] = s[:ntwk.frequency.npoints]
+            ntwk.s[:, 1, 1] = s[ntwk.frequency.npoints:2*ntwk.frequency.npoints]
+            ntwk.s[:, 0, 1] = s[2*ntwk.frequency.npoints:3*ntwk.frequency.npoints]
+            ntwk.s[:, 1, 0] = s[3*ntwk.frequency.npoints:]
 
         else:
             raise ValueError("Invalid ports "+str(ports)+". Options: 1, 2, (1,2).")
