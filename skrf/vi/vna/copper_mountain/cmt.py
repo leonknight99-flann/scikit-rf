@@ -34,6 +34,17 @@ class SweepMode(Enum):
     GROUPS = "GRO"
     SINGLE = "SING"
 
+class ChannelDisplay(Enum):
+    """How channel windows are arranged on the display."""
+    DISP_1 = '1'
+    DISP_V_2, DISP_H_2 = '2', '3'
+    DISP_V_3, DISP_H_3, DISP_3 = '4', '5', '6'
+    DISP_V_4, DISP_4 = '7', '8'
+    DISP__V_6, DISP_H_6 = '9', '10'
+    DISP_V_8, DISP_H_8 = '11', '12'
+    DISP_9 = '13'
+    DISP_V_12, DISP_H_12 = '14', '15'
+    DISP_16 = '16'
 
 class CMT(VNA):
     """
@@ -62,6 +73,13 @@ class CMT(VNA):
     class Channel(Channel):
         def __init__(self, parent, cnum: int, cname: str):
             super().__init__(parent, cnum, cname)
+
+            if cnum != 1:
+                default_msmnt = f"CH{self.cnum}_S11_1"
+                self.create_measurement(default_msmnt, "S11")
+
+        def _on_delete(self):
+            self.write(f"SYST:CHAN:DEL {self.cnum}")
 
         freq_start = VNA.command(
             get_cmd="SENS<self:cnum>:FREQ:STAR?",
@@ -243,6 +261,13 @@ class CMT(VNA):
     def _model_param(self, param: str):
         model_config = self._models.get(self.model, self._models["default"])
         return model_config[param]
+
+    channel_numbers = VNA.command(
+        get_cmd="DISP:SPL?",
+        set_cmd=None,
+        doc="""The channel numbers currently in use""",
+        validator=EnumValidator(ChannelDisplay),
+    )
 
     @property
     def nports(self) -> int:
