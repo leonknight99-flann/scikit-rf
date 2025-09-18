@@ -51,6 +51,7 @@ class ZVA(VNA):
 
     _models = {
         "default": {"nports": 2, "unsupported": []},
+        "ZVA50-4Port": {"nports": 4, "unsupported": []},
     }
 
     class Channel(Channel):
