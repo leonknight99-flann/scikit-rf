@@ -268,7 +268,7 @@ class ZVA(VNA):
 
             # self.sweep()
 
-            raw = self.query_values(f"CALC{self.cnum}:DATA:SGR SDAT", container=np.array, complex_values=True)
+            raw = self.query_values(f"CALC{self.cnum}:DATA:SGR? SDAT", container=np.array, complex_values=True)
             self.parent.wait_for_complete()
 
             ntwk = skrf.Network()
@@ -281,10 +281,9 @@ class ZVA(VNA):
 
         def sweep(self) -> None:
             orig_sweep_mode = self.sweep_mode
-            self.sweep_mode = SweepMode.IMMEDIATE
             self.parent._resource.clear()
 
-            self.write(f"INIT{self.cnum}:IMM")
+            self.write(f"INIT{self.cnum}:IMM ALL")
             self.parent.wait_for_complete()
             self.sweep_mode = orig_sweep_mode
 
@@ -293,6 +292,8 @@ class ZVA(VNA):
 
         self._resource.read_termination = "\n"
         self._resource.write_termination = "\n"
+
+        self.write("SYST:DISP:UPD ON")  # Switches display on whilst analyzer is remote controlled
 
         self.create_channel(1, "Channel 1")
         self.active_channel = self.ch1
@@ -345,7 +346,7 @@ class ZVA(VNA):
     @property
     def query_format(self) -> ValuesFormat:
         fmt = self.query("FORM?")
-        if fmt == "ASC,0":
+        if fmt == "ASCII":
             self._values_fmt = ValuesFormat.ASCII
         elif fmt == "REAL,32":
             self._values_fmt = ValuesFormat.BINARY_32
@@ -357,7 +358,7 @@ class ZVA(VNA):
     def query_format(self, fmt: ValuesFormat) -> None:
         if fmt == ValuesFormat.ASCII:
             self._values_fmt = ValuesFormat.ASCII
-            self.write("FORM ASC,0")
+            self.write("FORM ASCII")
         elif fmt == ValuesFormat.BINARY_32:
             self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM:BORD SWAP")
