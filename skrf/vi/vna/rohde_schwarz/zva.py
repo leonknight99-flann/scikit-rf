@@ -250,7 +250,8 @@ class ZVA(VNA):
             return ntwk
 
         def create_sparam_group(self, ports: Sequence[int]) -> None:
-            self.write(f"CALC{self.cnum}:PAR:DEF:SGR {','.join(ports)}")
+            port_str = ",".join(str(port) for port in ports)
+            self.write(f"CALC{self.cnum}:PAR:DEF:SGR {port_str}")
 
         def get_snp_network(
             self,
@@ -265,7 +266,7 @@ class ZVA(VNA):
 
             self.create_sparam_group(ports)
 
-            self.sweep()
+            # self.sweep()
 
             raw = self.query_values(f"CALC{self.cnum}:DATA:SGR SDAT", container=np.array, complex_values=True)
             self.parent.wait_for_complete()
