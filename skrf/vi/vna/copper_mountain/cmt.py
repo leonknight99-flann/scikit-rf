@@ -264,7 +264,7 @@ class CMT(VNA):
 
     channel_numbers = VNA.command(
         get_cmd="DISP:SPL?",
-        set_cmd=None,
+        set_cmd="DISP:SPL <arg>",
         doc="""The channel numbers currently in use""",
         validator=EnumValidator(ChannelDisplay),
     )
@@ -306,7 +306,7 @@ class CMT(VNA):
         elif fmt == ValuesFormat.BINARY_32:
             self._values_fmt = ValuesFormat.BINARY_32
             self.write("FORM:BORD SWAP")
-            self.write("FORM:DATA REA32")
+            self.write("FORM:DATA REAL32")
         elif fmt == ValuesFormat.BINARY_64:
             self._values_fmt = ValuesFormat.BINARY_64
             self.write("FORM:BORD SWAP")
