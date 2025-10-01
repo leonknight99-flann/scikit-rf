@@ -113,13 +113,15 @@ class HP8720B(VNA):
         ports = tuple(ports)
         sweep = kwargs.get("sweep", True)
 
-        if ports==(1,):
+        port_str = ",".join(str(port) for port in ports)
+
+        if port_str == '1':
             self.write('S11;')
             return self.one_port(fresh_sweep=sweep)
-        elif ports==(2,):
+        elif port_str == '2':
             self.write('S22;')
             return self.one_port(fresh_sweep=sweep)
-        elif ports==(1,2) or ports==(2,1):
+        elif port_str == '1,2' or port_str == '2,1':
             return self.two_port(fresh_sweep=sweep)
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))

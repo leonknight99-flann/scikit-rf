@@ -143,13 +143,16 @@ class HP8510C(VNA):
         sweep = kwargs.get("sweep", True)
         # name = kwargs.get("name", "")
         # raw_data = kwargs.get("raw_data", True)
-        if ports==(1,):
+
+        port_str = ",".join(str(port) for port in ports)
+
+        if port_str == '1':
             self.write('s11;')
             return self.one_port(fresh_sweep=sweep)
-        elif ports==(2,):
+        elif port_str == '2':
             self.write('s22;')
             return self.one_port(fresh_sweep=sweep)
-        elif ports==(1,2) or ports==(2,1):
+        elif port_str == '1,2' or port_str == '2,1':
             return self.two_port(fresh_sweep=sweep)
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))

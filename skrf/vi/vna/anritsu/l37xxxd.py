@@ -213,6 +213,8 @@ class L37XXXD(VNA):
         if ports is None:
             ports = (1,2)
 
+        port_str = ",".join(str(port) for port in ports)
+
         ntwk = skrf.Network()
 
         print(self.frequency)
@@ -229,17 +231,17 @@ class L37XXXD(VNA):
         orig_timeout = self._resource.timeout
         self._resource.timeout = 10000  # ms - increase timeout for large sweeps
 
-        if ports == (1,):
+        if port_str == '1':
             s11 = self.query_values("OS11C;", is_big_endian=True, container=np.array)
             s11 = s11[::2] + 1j*s11[1::2]
             ntwk.s[:, 0, 0] = s11
 
-        elif ports == (2,):
+        elif port_str == '2':
             s22 = self.query_values("OS22C;", is_big_endian=True, container=np.array)
             s22 = s22[::2] + 1j*s22[1::2]
             ntwk.s[:, 0, 0] = s22
 
-        elif ports == (1,2) or ports == (2,1):
+        elif port_str == '1,2' or port_str == '2,1':
             s = self.query_values("O4SC;", is_big_endian=True, container=np.array)
             s = s[::2] + 1j*s[1::2]
             ntwk.s[:, 0, 0] = s[:ntwk.frequency.npoints]
