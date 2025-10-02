@@ -283,7 +283,6 @@ class ZVA(VNA):
             # reorder into (n, p, p)
             ntwk.s = blocks.reshape(p, p, n).transpose(2, 0, 1)
 
-
             self.parent.query_format = orig_query_fmt
 
             return ntwk
