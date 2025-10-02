@@ -244,7 +244,15 @@ class L37XXXD(VNA):
         elif port_str == '1,2' or port_str == '2,1':
             s = self.query_values("O4SC;", is_big_endian=True, container=np.array)
             s = s[::2] + 1j*s[1::2]
-            ntwk.s = s.reshape(-1, len(ports), len(ports))
+            # ntwk.s = s.reshape(-1, len(ports), len(ports))
+
+            n = ntwk.frequency.npoints
+            p = len(ports)
+            # reshape into (p*p, n) where each row = Sij across frequencies
+            blocks = s.reshape(p*p, n)
+
+            # reorder into (n, p, p)
+            ntwk.s = blocks.reshape(p, p, n).transpose(2, 0, 1)
 
             # ntwk.s[:, 0, 0] = s[:ntwk.frequency.npoints]
             # ntwk.s[:, 1, 1] = s[ntwk.frequency.npoints:2*ntwk.frequency.npoints]

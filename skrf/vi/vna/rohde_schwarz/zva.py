@@ -273,7 +273,16 @@ class ZVA(VNA):
 
             ntwk = skrf.Network()
             ntwk.frequency = self.frequency
-            ntwk.s = raw.reshape((-1, len(ports), len(ports)))
+            # ntwk.s = raw.reshape((-1, len(ports), len(ports)))
+
+            n = ntwk.frequency.npoints
+            p = len(ports)
+            # reshape into (p*p, n) where each row = Sij across frequencies
+            blocks = raw.reshape(p*p, n)
+
+            # reorder into (n, p, p)
+            ntwk.s = blocks.reshape(p, p, n).transpose(2, 0, 1)
+
 
             self.parent.query_format = orig_query_fmt
 
